@@ -16,7 +16,7 @@ button, input { font: inherit; }
 .video-card { height: calc(100dvh - 104px); min-height: 480px; max-width: 560px; margin: 0 auto; position: relative; scroll-snap-align: start; background: #050505; overflow: hidden; }
 .youtube-player, .video-preview { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .youtube-player { z-index: 1; background: #000; }
-.video-preview { display: grid; place-items: center; background-color: #171717; background-size: cover; background-position: center; }
+.video-preview { display: grid; place-items: center; padding: 0; border: 0; cursor: pointer; background-color: #171717; background-size: cover; background-position: center; }
 .preview-play { width: 68px; height: 68px; display: grid; place-items: center; padding-left: 5px; border-radius: 50%; background: rgba(0,0,0,.72); color: white; font-size: 26px; }
 .video-vignette { pointer-events: none; position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, rgba(0,0,0,.12), transparent 42%, rgba(0,0,0,.72)); }
 .video-info { position: absolute; left: 22px; right: 22px; bottom: 26px; z-index: 3; text-shadow: 0 1px 4px #000; pointer-events: none; }
