@@ -98,10 +98,11 @@ export default function Home() {
           <article className="video-card" data-id={video.id} key={video.id}>
             <iframe
               className="youtube-player"
-              src={`https://www.youtube.com/embed/${video.id}?playsinline=1&controls=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}`}
+              src={`https://www.youtube.com/embed/${video.id}?autoplay=0&playsinline=1&controls=1&rel=0`}
               title={video.title}
               loading={items[0]?.id === video.id ? "eager" : "lazy"}
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              referrerPolicy="origin"
+              allow="encrypted-media; picture-in-picture; fullscreen"
               allowFullScreen
             />
             <div className="video-vignette" />
