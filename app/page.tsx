@@ -99,7 +99,7 @@ export default function Home() {
             {activeId === video.id ? (
               <iframe
                 className="youtube-player"
-                src={`https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&modestbranding=1`}
+                src={`https://www.youtube.com/embed/${video.id}?autoplay=0&playsinline=1&controls=1&rel=0&modestbranding=1`}
                 title={video.title}
                 loading="eager"
                 allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
