@@ -67,12 +67,13 @@ export default function Home() {
       }
     }, { root, threshold: 0.7 });
     root.querySelectorAll('.video-card').forEach((card) => observer.observe(card));
-    return () => observer.disconnect();
-  }, [items]);
-
-  useEffect(() => {
-    if (items.length && items.length < 5 && !loading) loadVideos(false);
-  }, [items.length, loading, loadVideos]);
+    const sentinel = sentinelRef.current;
+    const moreObserver = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) loadVideos(false);
+    }, { root, rootMargin: '700px 0px' });
+    if (sentinel) moreObserver.observe(sentinel);
+    return () => { observer.disconnect(); moreObserver.disconnect(); };
+  }, [items, loadVideos]);
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
