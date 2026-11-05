@@ -2,78 +2,78 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type VideoItem = {
+type LiveItem = {
   id: string;
-  description: string;
+  roomId: string;
+  title: string;
   author: string;
   authorName: string;
   cover: string;
-  videoUrl: string;
+  viewers: number | null;
   shareUrl: string;
-  likes: number | null;
 };
 
+function formatViewers(value: number | null) {
+  if (value === null) return '';
+  return new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+}
+
 export default function Home() {
-  const [items, setItems] = useState<VideoItem[]>([]);
-  const [keyword, setKeyword] = useState('fyp');
-  const [activeKeyword, setActiveKeyword] = useState('fyp');
+  const [items, setItems] = useState<LiveItem[]>([]);
+  const [keyword, setKeyword] = useState('live');
+  const [activeKeyword, setActiveKeyword] = useState('live');
   const [offset, setOffset] = useState(0);
+  const [searchId, setSearchId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [muted, setMuted] = useState(true);
   const [activeId, setActiveId] = useState('');
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
+  const hasMoreRef = useRef(true);
 
-  const loadVideos = useCallback(async (reset = false) => {
-    if (loadingRef.current) return;
+  const loadLives = useCallback(async (reset = false) => {
+    if (loadingRef.current || (!reset && !hasMoreRef.current)) return;
     loadingRef.current = true;
     setLoading(true);
     setError('');
     try {
       const start = reset ? 0 : offset;
-      const response = await fetch(`/api/feed?keyword=${encodeURIComponent(activeKeyword)}&offset=${start}&count=10`);
+      const cursor = reset ? '' : searchId;
+      const response = await fetch(`/api/feed?keyword=${encodeURIComponent(activeKeyword)}&offset=${start}&count=10&searchId=${encodeURIComponent(cursor)}`);
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Impossible de charger les vidéos.');
-      const incoming = (data.items || []) as VideoItem[];
-      setItems((previous) => reset ? incoming : [...previous, ...incoming.filter((v) => !previous.some((p) => p.id === v.id))]);
-      setOffset(data.nextOffset ?? start + 10);
+      if (!response.ok) throw new Error(data.error || 'Impossible de charger les lives.');
+      const incoming = (data.items || []) as LiveItem[];
+      setItems((previous) => reset ? incoming : [...previous, ...incoming.filter((live) => !previous.some((item) => item.id === live.id))]);
+      setOffset(data.nextOffset ?? start);
+      setSearchId(data.searchId || cursor);
+      hasMoreRef.current = incoming.length > 0 && data.nextOffset !== null;
       if (reset && incoming[0]) setActiveId(incoming[0].id);
-      if (!incoming.length && reset) setError('Aucune vidéo trouvée pour ce mot-clé. Essaie « funny », « gaming » ou « roblox ».');
+      if (!incoming.length && reset) setError('Aucun live trouvé. Essaie un autre mot-clé.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
     } finally {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [activeKeyword, offset]);
+  }, [activeKeyword, offset, searchId]);
 
-  useEffect(() => { loadVideos(true); }, [activeKeyword]); // initial load and keyword changes
+  useEffect(() => { loadLives(true); }, [activeKeyword]); // initial load and keyword changes
 
   useEffect(() => {
     const root = document.querySelector('.feed');
     if (!root) return;
     const observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const id = (entry.target as HTMLElement).dataset.id || '';
-          setActiveId(id);
-          const video = entry.target.querySelector('video');
-          if (video) video.play().catch(() => {});
-          document.querySelectorAll<HTMLVideoElement>('.video-player').forEach((other) => {
-            if (other !== video) other.pause();
-          });
-        }
+        if (entry.isIntersecting) setActiveId((entry.target as HTMLElement).dataset.id || '');
       }
     }, { root, threshold: 0.7 });
-    root.querySelectorAll('.video-card').forEach((card) => observer.observe(card));
-    const sentinel = sentinelRef.current;
+    root.querySelectorAll('.live-card').forEach((card) => observer.observe(card));
     const moreObserver = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) loadVideos(false);
+      if (entries.some((entry) => entry.isIntersecting)) loadLives(false);
     }, { root, rootMargin: '700px 0px' });
-    if (sentinel) moreObserver.observe(sentinel);
+    if (sentinelRef.current) moreObserver.observe(sentinelRef.current);
     return () => { observer.disconnect(); moreObserver.disconnect(); };
-  }, [items, loadVideos]);
+  }, [items, loadLives]);
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -81,6 +81,8 @@ export default function Home() {
     if (next) {
       setItems([]);
       setOffset(0);
+      setSearchId('');
+      hasMoreRef.current = true;
       setActiveKeyword(next);
     }
   };
@@ -90,49 +92,44 @@ export default function Home() {
       <header className="topbar">
         <a className="brand" href="/">tok<span>tok</span></a>
         <form className="search" onSubmit={submitSearch}>
-          <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Rechercher un thème…" aria-label="Rechercher des vidéos" />
+          <input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="Rechercher des lives…" aria-label="Rechercher des lives TikTok" />
           <button type="submit" aria-label="Rechercher">⌕</button>
         </form>
-        <button className="sound-toggle" onClick={() => setMuted((value) => !value)}>{muted ? 'Son coupé' : 'Son activé'}</button>
+        <div className="live-label"><span /> LIVE</div>
       </header>
 
-      <section className="feed" aria-label="Flux de vidéos">
-        {items.map((item) => (
-          <article className="video-card" data-id={item.id} key={item.id}>
-            <video
-              className="video-player"
-              src={item.videoUrl}
-              poster={item.cover || undefined}
-              playsInline
-              loop
-              muted={muted}
-              autoPlay={item.id === activeId}
-              preload="metadata"
-              onClick={(event) => {
-                const video = event.currentTarget;
-                if (video.paused) video.play().catch(() => {});
-                else video.pause();
-              }}
-            />
-            <div className="video-shade" />
-            <div className="video-info">
-              <div className="creator">@{item.author}</div>
-              <p>{item.description || 'Vidéo TikTok'}</p>
-              <a href={item.shareUrl || '#'} target="_blank" rel="noreferrer" onClick={(e) => { if (!item.shareUrl) e.preventDefault(); }}>Voir sur TikTok ↗</a>
+      <section className="feed" aria-label="Flux de lives TikTok">
+        {items.map((live) => (
+          <article className="live-card" data-id={live.id} key={live.id}>
+            {live.cover ? (
+              // TikHub provides live-room cover images, not a playable broadcast stream.
+              // The card links to the actual live on TikTok.
+              <img className="live-cover" src={live.cover} alt="" loading={live.id === activeId ? 'eager' : 'lazy'} />
+            ) : <div className="live-cover live-cover-placeholder"><span>toktok</span></div>}
+            <div className="live-vignette" />
+            <div className="live-badge"><span /> EN DIRECT</div>
+            <div className="live-info">
+              <div className="creator">@{live.author || live.authorName}</div>
+              <p>{live.title}</p>
+              <div className="live-meta">
+                {live.viewers !== null && <span>◉ {formatViewers(live.viewers)} spectateurs</span>}
+                <span>Live TikTok</span>
+              </div>
+              <a className="watch-live" href={live.shareUrl} target="_blank" rel="noreferrer">Regarder le live ↗</a>
             </div>
-            <div className="video-actions">
-              <button onClick={() => setMuted((value) => !value)} aria-label="Activer ou couper le son">{muted ? '🔇' : '🔊'}</button>
-              {item.likes !== null && <span>♥ {item.likes.toLocaleString('fr-FR')}</span>}
+            <div className="live-side">
+              <div className="avatar">{(live.authorName || live.author || 'T').slice(0, 1).toUpperCase()}</div>
+              <span>LIVE</span>
             </div>
           </article>
         ))}
         <div className="feed-status" ref={sentinelRef}>
-          {loading && <span>Chargement des vidéos…</span>}
+          {loading && <span>Recherche de lives…</span>}
           {error && <span>{error}</span>}
-          {!loading && !error && items.length > 0 && <button onClick={() => loadVideos(false)}>Charger la suite</button>}
+          {!loading && !error && items.length > 0 && hasMoreRef.current && <button onClick={() => loadLives(false)}>Charger la suite</button>}
         </div>
       </section>
-      <footer>Les vidéos restent hébergées par TikTok/TikHub. Toktok est un lecteur indépendant non affilié à TikTok.</footer>
+      <footer>Toktok affiche les informations des lives publics. Ouvre TikTok pour regarder la diffusion en direct.</footer>
     </main>
   );
 }
