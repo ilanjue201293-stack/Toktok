@@ -96,27 +96,14 @@ export default function Home() {
       <section className="feed" aria-label="Flux de vidéos YouTube">
         {items.map((video) => (
           <article className="video-card" data-id={video.id} key={video.id}>
-            {activeId === video.id ? (
-              <iframe
-                className="youtube-player"
-                src={`https://www.youtube.com/embed/${video.id}?autoplay=0&playsinline=1&controls=1&rel=0&modestbranding=1`}
-                title={video.title}
-                loading="eager"
-                allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-              />
-            ) : (
-              <button
-                type="button"
-                className="video-preview"
-                aria-label={`Lire ${video.title}`}
-                onClick={() => setActiveId(video.id)}
-                style={video.thumbnail ? { backgroundImage: `url("${video.thumbnail}")` } : undefined}
-              >
-                <span className="preview-play">▶</span>
-              </button>
-            )}
+            <iframe
+              className="youtube-player"
+              src={`https://www.youtube.com/embed/${video.id}?playsinline=1&controls=1&rel=0&enablejsapi=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}`}
+              title={video.title}
+              loading={items[0]?.id === video.id ? "eager" : "lazy"}
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
             <div className="video-vignette" />
             <div className="video-info">
               <div className="creator">{video.author}</div>
