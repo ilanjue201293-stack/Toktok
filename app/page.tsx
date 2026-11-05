@@ -27,6 +27,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeId, setActiveId] = useState('');
+  const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const loadingRef = useRef(false);
   const hasMoreRef = useRef(true);
@@ -47,6 +48,7 @@ export default function Home() {
       setOffset(data.nextOffset ?? start);
       setSearchId(data.searchId || cursor);
       hasMoreRef.current = incoming.length > 0 && data.nextOffset !== null;
+      setHasMore(hasMoreRef.current);
       if (reset && incoming[0]) setActiveId(incoming[0].id);
       if (!incoming.length && reset) setError('Aucun live trouvé. Essaie un autre mot-clé.');
     } catch (err) {
@@ -83,6 +85,7 @@ export default function Home() {
       setOffset(0);
       setSearchId('');
       hasMoreRef.current = true;
+      setHasMore(true);
       setActiveKeyword(next);
     }
   };
@@ -126,7 +129,7 @@ export default function Home() {
         <div className="feed-status" ref={sentinelRef}>
           {loading && <span>Recherche de lives…</span>}
           {error && <span>{error}</span>}
-          {!loading && !error && items.length > 0 && hasMoreRef.current && <button onClick={() => loadLives(false)}>Charger la suite</button>}
+          {!loading && !error && items.length > 0 && hasMore && <button onClick={() => loadLives(false)}>Charger la suite</button>}
         </div>
       </section>
       <footer>Toktok affiche les informations des lives publics. Ouvre TikTok pour regarder la diffusion en direct.</footer>
