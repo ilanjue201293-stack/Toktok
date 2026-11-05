@@ -37,19 +37,6 @@ function firstNumber(...values: unknown[]): number | null {
   return null;
 }
 
-function deepValues(root: unknown, keys: string[], depth = 0, seen = new Set<unknown>()): unknown[] {
-  if (!root || typeof root !== 'object' || seen.has(root) || depth > 7) return [];
-  seen.add(root);
-  const object = root as AnyObject;
-  const values: unknown[] = [];
-  for (const [key, value] of Object.entries(object)) {
-    if (keys.includes(key)) values.push(value);
-    const parsed = parseJson(value);
-    if (parsed && typeof parsed === 'object') values.push(...deepValues(parsed, keys, depth + 1, seen));
-  }
-  return values;
-}
-
 function collectLiveObjects(root: unknown): AnyObject[] {
   const found: AnyObject[] = [];
   const seen = new Set<unknown>();
