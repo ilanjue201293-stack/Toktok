@@ -87,7 +87,8 @@ export async function GET(request: NextRequest) {
       const download = asObject(video.download_addr) ?? asObject(video.downloadAddr) ?? {};
       const cover = asObject(video.cover) ?? {};
       const playUrl = firstString(play.url_list, play.urlList, download.url_list, download.urlList);
-      const coverUrl = firstString(cover.url_list, cover.urlList, video.origin_cover?.url_list);
+      const originCover = asObject(video.origin_cover) ?? asObject(video.originCover) ?? {};
+      const coverUrl = firstString(cover.url_list, cover.urlList, originCover.url_list, originCover.urlList);
       const username = firstString(author.unique_id, author.uniqueId, author.nickname, author.name);
       const id = firstString(item.aweme_id, item.awemeId, item.id, item.item_id);
       return {
