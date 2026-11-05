@@ -99,16 +99,23 @@ export default function Home() {
             {activeId === video.id ? (
               <iframe
                 className="youtube-player"
-                src={`https://www.youtube-nocookie.com/embed/${video.id}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&modestbranding=1`}
+                src={`https://www.youtube.com/embed/${video.id}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&modestbranding=1`}
                 title={video.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                loading="eager"
+                allow="autoplay; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
               />
             ) : (
-              <div className="video-preview" style={video.thumbnail ? { backgroundImage: `url("${video.thumbnail}")` } : undefined}>
-                <div className="preview-play">▶</div>
-              </div>
+              <button
+                type="button"
+                className="video-preview"
+                aria-label={`Lire ${video.title}`}
+                onClick={() => setActiveId(video.id)}
+                style={video.thumbnail ? { backgroundImage: `url("${video.thumbnail}")` } : undefined}
+              >
+                <span className="preview-play">▶</span>
+              </button>
             )}
             <div className="video-vignette" />
             <div className="video-info">
